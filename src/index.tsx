@@ -11,8 +11,8 @@ import inobounce from 'inobounce';
 
 import './index.css';
 import App from './App';
-import Edit from './routes/Edit';
-import Info from './routes/Info';
+import RouteEdit from './routes/RouteEdit';
+import RouteInfo from './routes/RouteInfo';
 import { store } from './redux/store'
 
 
@@ -26,11 +26,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'info',
-        element: <Info />
+        element: <RouteInfo />
       },
       {
         path: 'edit',
-        element: <Edit />
+        element: <RouteEdit />
       }
     ],
     errorElement: <div>ERROR</div>

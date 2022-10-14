@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Dialog } from '@headlessui/react';
 
 import Icon, { IconResourceKey } from './icons';
 import { useAppDispatch, useAppSelector } from "./redux/store";
-import { setScanCode } from "./redux/uiSlice";
+import { setInfoScanCode } from "./redux/uiSlice";
 
 
 const menuRoutes = [
@@ -12,17 +13,20 @@ const menuRoutes = [
     path: '/info'
   },
   {
-    text: '編輯',
+    text: '轉移',
     path: '/edit'
   }
 ]
 
 
 export default function App(): JSX.Element {
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const scanCode = useAppSelector((state) => state.ui.scanCode);
+  const { selectedMember } = useAppSelector((state) => state.ui);
+  const scanCodeInput = useRef<HTMLInputElement>(null);
+  const isEditMode = location.pathname === '/edit';
 
   // Default to /info
   useEffect(() => {
@@ -31,26 +35,53 @@ export default function App(): JSX.Element {
     }
   }, [location])
 
-  const onScanButtonClick = () => {
-    if (!scanCode) {
-      dispatch(setScanCode('01010130'));
-      return;
+  // Bind keys
+  const keyHandler = (event: KeyboardEvent | ReactKeyboardEvent) => {
+    switch (event.key) {
+      case 'Enter':
+        if (isScanDialogOpen) {
+          onScanButtonClick();
+          event.preventDefault();
+        }
+        break;
+      case 'Tab':
+        setIsScanDialogOpen(!isScanDialogOpen);
+        event.preventDefault();
+        break;
     }
-    dispatch(setScanCode(`0${parseInt(scanCode) + 1}`))
+  }
+  useEffect(() => {
+    window.addEventListener('keydown', keyHandler);
+    return () => window.removeEventListener('keydown', keyHandler);
+  }, [])
+
+  const onScanButtonClick = () => {
+    const sn = scanCodeInput.current!.value;
+
+    if (sn) {
+      if (!isEditMode) {
+        dispatch(setInfoScanCode(scanCodeInput.current!.value));
+      } else {
+
+      }
+    }
+
+    setIsScanDialogOpen(false);
   }
 
   return <div className='flex flex-col max-w-3xl h-screen h-screen-ios mx-auto'>
     {/* Content */}
-    <div className='grow overflow-y-auto lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent' style={{WebkitOverflowScrolling: 'touch'}}>
+    <div className='grow overflow-x-hidden overflow-y-auto lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent'
+         style={{WebkitOverflowScrolling: 'touch'}}>
       <Outlet />
     </div>
 
     {/* Menu */}
-    <div className='drop-shadow-eli w-full max-w-3xl columns-2 gap-0 bg-gray-700 sm:rounded-t-xl'>
+    <div className='drop-shadow-eli w-full max-w-3xl columns-2 gap-16 bg-gray-700 sm:rounded-t-xl sm:gap-0'>
       {/* Scan */}
-      <div onClick={onScanButtonClick} className='transition-colors group hover:bg-teal-500 drop-shadow-eli absolute rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-teal-600 flex items-center justify-center cursor-pointer'>
+      <button disabled={isEditMode && !selectedMember} onClick={() => setIsScanDialogOpen(true)} className='transition-opacity disabled:opacity-50 transition-colors group hover:bg-teal-500 drop-shadow-eli absolute rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-teal-600 flex items-center justify-center cursor-pointer'>
         <Icon className='transition-colors w-12 h-12 stroke-gray-300 group-hover:stroke-white' icon='qrCode'></Icon>
-      </div>
+      </button>
       {/* Routes */}
       {menuRoutes.map(route =>
         <RouteButton key={route.path}
@@ -59,6 +90,41 @@ export default function App(): JSX.Element {
                      onClick={() => (location.pathname !== route.path) && navigate(route.path)} />
       )}
     </div>
+
+    {/* Dialog */}
+    <Dialog
+      open={isScanDialogOpen}
+      onClose={() => setIsScanDialogOpen(false)}
+      className='relative z-50'
+      initialFocus={scanCodeInput}
+    >
+      <div className='fixed inset-0 bg-black/25' aria-hidden='true' />
+      <div className='fixed inset-0 flex items-center justify-center p-8'>
+        <Dialog.Panel className='drop-shadow-eli  w-full max-w-sm rounded-xl bg-gray-600 p-6 -translate-y-1/3 sm:-translate-y-0'>
+          <Dialog.Title className='text-gray-200 text-xl tracking-widest'>掃描或輸入產編</Dialog.Title>
+          <div>
+            <input ref={scanCodeInput}
+                   className='tracking-widest focus:outline-none w-full rounded-md text-4xl sm:text-5xl p-2 my-6 text-center bg-gray-800 text-teal-500 placeholder:text-gray-600'
+                   type='tel'
+                   placeholder='00000000'
+                   onKeyDown={keyHandler}
+            />
+          </div>
+          <div className='text-right'>
+            <button
+              onClick={onScanButtonClick}
+              className='bg-gray-400 px-4 py-2 rounded-md hover:bg-teal-700 hover:text-gray-300 text-xl text-gray-700 tracking-widest indent-[0.1em]'
+            >
+              {menuRoutes.map(v => {
+                if (v.path !== location.pathname) return null;
+                if (isEditMode) return `${v.text}至 ${selectedMember?.name}`;
+                return v.text;
+              })}
+            </button>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
   </div>;
 }
 
