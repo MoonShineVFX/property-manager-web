@@ -1,6 +1,10 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const path = require('path');
 const ReactRefreshPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+const webpack = require('webpack')
+const path = require('path');
+
+const dotenv = require('dotenv')
+dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -48,6 +52,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/index.html'
     }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env)
+    })
   ].filter(Boolean),
   output: {
     filename: '[name].[contenthash].js',

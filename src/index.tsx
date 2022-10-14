@@ -4,14 +4,16 @@ import {
   createBrowserRouter,
   RouterProvider
 } from 'react-router-dom';
-import './index.css';
+import { Provider } from 'react-redux';
 
 // @ts-ignore
 import inobounce from 'inobounce';
 
+import './index.css';
 import App from './App';
 import Edit from './routes/Edit';
 import Info from './routes/Info';
+import { store } from './redux/store'
 
 
 inobounce.enable();
@@ -40,4 +42,8 @@ const root = createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-root.render(<RouterProvider router={router}/>);
+root.render(
+  <Provider store={store}>
+    <RouterProvider router={router}/>
+  </Provider>
+);
