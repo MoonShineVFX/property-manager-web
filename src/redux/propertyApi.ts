@@ -35,7 +35,7 @@ export const propertyApi = createApi({
     }
   }),
   endpoints: (builder) => ({
-    getItemInfo: builder.query<ItemInfo, string>({
+    getItemInfo: builder.mutation<ItemInfo, string>({
       query: (sn) => ({
         url: 'item',
         method: 'POST',
@@ -66,11 +66,12 @@ export const propertyApi = createApi({
         url: 'item_edit',
         method: 'POST',
         body: `action=save&sn=${args.sn}&oeid=${args.oeid}`,
-        responseHandler: (response) => response.text()
+        responseHandler: (response) => response.text(),
+        validateStatus: (response, result) => result.includes('Successfully')
       })
     })
   })
 })
 
 
-export const { useGetMembersQuery, useGetItemInfoQuery } = propertyApi;
+export const { useGetMembersQuery, useGetItemInfoMutation, useEditItemInfoMutation } = propertyApi;

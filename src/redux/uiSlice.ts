@@ -4,8 +4,8 @@ import { DropdownMenuData } from '../components/DropdownMenu';
 
 
 export interface UIState {
-  infoScanCode?: string;
   isInfoFirst: boolean;
+  isEditFirst: boolean;
   isSlideActive: boolean;
   selectedTeam?: DropdownMenuData;
   selectedMember?: DropdownMenuData;
@@ -13,6 +13,7 @@ export interface UIState {
 
 const initialState: UIState = {
   isInfoFirst: true,
+  isEditFirst: true,
   isSlideActive: false
 }
 
@@ -20,22 +21,23 @@ export const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setInfoScanCode: (state, action: PayloadAction<string>) => {
-      state.isInfoFirst = false;
-      state.infoScanCode = action.payload;
-      state.isSlideActive = true;
-    },
-    disableSlide: (state) => {
-      state.isSlideActive = false;
+    toggleSlide: (state, action: PayloadAction<boolean>) => {
+      state.isSlideActive = action.payload;
     },
     setSelectedTeam: (state, action: PayloadAction<DropdownMenuData>) => {
       state.selectedTeam = action.payload;
     },
     setSelectedMember: (state, action: PayloadAction<DropdownMenuData>) => {
       state.selectedMember = action.payload;
+    },
+    disableInfoFirst: (state) => {
+      state.isInfoFirst = false;
+    },
+    disableEditFirst: (state) => {
+      state.isEditFirst = false;
     }
   }
 })
 
-export const { setInfoScanCode, disableSlide, setSelectedTeam, setSelectedMember } = uiSlice.actions;
+export const { toggleSlide, setSelectedTeam, setSelectedMember, disableEditFirst, disableInfoFirst } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -1,10 +1,11 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
 
 import Icon, { IconResourceKey } from './icons';
-import { useAppDispatch, useAppSelector } from "./redux/store";
-import { setInfoScanCode } from "./redux/uiSlice";
+import { useAppDispatch, useAppSelector } from './redux/store';
+import { disableInfoFirst, disableEditFirst, toggleSlide } from './redux/uiSlice';
+import { useEditItemInfoMutation, useGetItemInfoMutation } from './redux/propertyApi';
 
 
 const menuRoutes = [
@@ -21,66 +22,110 @@ const menuRoutes = [
 
 export default function App(): JSX.Element {
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isUsingScanner, setIsUsingScanner] = useState(false);
+  const [visualHeight, setVisualHeight] = useState(window.innerHeight);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { selectedMember } = useAppSelector((state) => state.ui);
+  const { selectedMember, isEditFirst, isInfoFirst } = useAppSelector((state) => state.ui);
   const scanCodeInput = useRef<HTMLInputElement>(null);
+  const [scanCodeInputValue, setScanCodeInputValue] = useState('');
   const isEditMode = location.pathname === '/edit';
+  const [editItem] = useEditItemInfoMutation({fixedCacheKey: 'shared-edit'});
+  const [getItemInfo] = useGetItemInfoMutation({fixedCacheKey: 'shared-info'});
 
   // Default to /info
   useEffect(() => {
     if (location.pathname === '/') {
       navigate('/info');
     }
-  }, [location])
+  }, [location]);
 
-  // Bind keys
-  const keyHandler = (event: KeyboardEvent | ReactKeyboardEvent) => {
-    switch (event.key) {
-      case 'Enter':
-        if (isScanDialogOpen) {
-          onScanButtonClick();
-          event.preventDefault();
-        }
-        break;
-      case 'Tab':
-        setIsScanDialogOpen(!isScanDialogOpen);
-        event.preventDefault();
-        break;
-    }
-  }
+  // Clean scancode input
   useEffect(() => {
-    window.addEventListener('keydown', keyHandler);
-    return () => window.removeEventListener('keydown', keyHandler);
-  }, [])
+    if (!isScanDialogOpen) setScanCodeInputValue('');
+  }, [isScanDialogOpen]);
 
+  // Event Listeners
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.visualViewport?.addEventListener('resize', handleVisualViewportResize);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.visualViewport?.removeEventListener('resize', handleVisualViewportResize);
+    }
+  }, []);
+
+  // Handlers
   const onScanButtonClick = () => {
-    const sn = scanCodeInput.current!.value;
+    const scanValue = scanCodeInput.current!.value;
 
-    if (sn) {
+    if (scanValue) {
       if (!isEditMode) {
-        dispatch(setInfoScanCode(scanCodeInput.current!.value));
+        if (isInfoFirst) dispatch(disableInfoFirst());
+        getItemInfo(scanValue);
+        dispatch(toggleSlide(true));
       } else {
-
+        if (isEditFirst) dispatch(disableEditFirst());
+        editItem({
+          sn: scanValue,
+          oeid: selectedMember!.value.eid
+        });
       }
     }
 
     setIsScanDialogOpen(false);
   }
 
-  return <div className='flex flex-col max-w-3xl h-screen h-screen-ios mx-auto'>
+  const handleScanCodeInput = (event: ChangeEvent<HTMLInputElement>) => {
+    if (isUsingScanner) {
+      setScanCodeInputValue(event.target.value);
+      return;
+    }
+    const result = event.target.value.replace(/\D/g, '');
+    setScanCodeInputValue(result);
+  }
+
+  const handleKeyDown = (event: KeyboardEvent | ReactKeyboardEvent) => {
+    console.log(event.key);
+    switch (event.key) {
+      case 'Enter':
+        if (isScanDialogOpen) {
+          onScanButtonClick();
+          event.preventDefault();
+        }
+        if (isUsingScanner) setIsUsingScanner(false);
+        break;
+      case '!':
+        setIsUsingScanner(true);
+        if (!isScanDialogOpen) setIsScanDialogOpen(true);
+        event.preventDefault();
+        break;
+      default:
+        break;
+    }
+  }
+
+  const handleVisualViewportResize = () => {
+    window.visualViewport && setVisualHeight(window.visualViewport?.height);
+  }
+
+  return <div className='flex flex-col max-w-3xl h-full mx-auto'>
     {/* Content */}
-    <div className='grow overflow-x-hidden overflow-y-auto lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent'
-         style={{WebkitOverflowScrolling: 'touch'}}>
+    <div className='grow overflow-hidden'>
       <Outlet />
     </div>
 
     {/* Menu */}
     <div className='drop-shadow-eli w-full max-w-3xl columns-2 gap-16 bg-gray-700 sm:rounded-t-xl sm:gap-0'>
       {/* Scan */}
-      <button disabled={isEditMode && !selectedMember} onClick={() => setIsScanDialogOpen(true)} className='transition-opacity disabled:opacity-50 transition-colors group hover:bg-teal-500 drop-shadow-eli absolute rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-teal-600 flex items-center justify-center cursor-pointer'>
-        <Icon className='transition-colors w-12 h-12 stroke-gray-300 group-hover:stroke-white' icon='qrCode'></Icon>
+      <button
+        disabled={isEditMode && !selectedMember}
+        onClick={() => setIsScanDialogOpen(true)}
+        className='focus:outline-none transition-colors disabled:bg-teal-800 group
+        hover:enabled:bg-teal-500 drop-shadow-eli absolute rounded-full left-1/2 -translate-x-1/2
+        -translate-y-1/2 w-16 h-16 bg-teal-600 flex items-center justify-center enabled:cursor-pointer'>
+        <Icon className='transition-colors w-12 h-12 stroke-gray-300 group-disabled:stroke-gray-500 group-hover:stroke-white' icon='qrCode'></Icon>
       </button>
       {/* Routes */}
       {menuRoutes.map(route =>
@@ -99,15 +144,19 @@ export default function App(): JSX.Element {
       initialFocus={scanCodeInput}
     >
       <div className='fixed inset-0 bg-black/25' aria-hidden='true' />
-      <div className='fixed inset-0 flex items-center justify-center p-8'>
-        <Dialog.Panel className='drop-shadow-eli  w-full max-w-sm rounded-xl bg-gray-600 p-6 -translate-y-1/3 sm:-translate-y-0'>
+      <div className={`${isUsingScanner ? '' : 'transition-all'} ease-out fixed -translate-y-1/2 p-4 w-full flex flex-col items-center`} style={{top: visualHeight / 2}}>
+        <Dialog.Panel className='drop-shadow-eli w-full max-w-sm rounded-xl bg-gray-600 p-6'>
           <Dialog.Title className='text-gray-200 text-xl tracking-widest'>掃描或輸入產編</Dialog.Title>
           <div>
             <input ref={scanCodeInput}
                    className='tracking-widest focus:outline-none w-full rounded-md text-4xl sm:text-5xl p-2 my-6 text-center bg-gray-800 text-teal-500 placeholder:text-gray-600'
-                   type='tel'
+                   type='text'
+                   pattern={isUsingScanner ? undefined : '[0-9]*'}
                    placeholder='00000000'
-                   onKeyDown={keyHandler}
+                   value={scanCodeInputValue}
+                   onChange={handleScanCodeInput}
+                   onKeyDown={handleKeyDown}
+                   enterKeyHint='go'
             />
           </div>
           <div className='text-right'>
@@ -117,7 +166,7 @@ export default function App(): JSX.Element {
             >
               {menuRoutes.map(v => {
                 if (v.path !== location.pathname) return null;
-                if (isEditMode) return `${v.text}至 ${selectedMember?.name}`;
+                if (isEditMode) return <span key={v.text}>{`${v.text}至 `}<span className='font-bold'>{selectedMember?.name}</span></span>;
                 return v.text;
               })}
             </button>

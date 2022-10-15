@@ -12,8 +12,8 @@ export type DropdownMenuData = {
 
 export default function DropdownMenu(props: {selectValue?: DropdownMenuData, onChange: (value: DropdownMenuData) => void, dataList: DropdownMenuData[]}): JSX.Element {
   useEffect(() => {
-    if (props.dataList) props.onChange(props.dataList[0]);
-  }, [props.dataList])
+    if (!props.selectValue || !props.dataList.includes(props.selectValue)) props.onChange(props.dataList[0]);
+  }, [props.selectValue, props.dataList])
 
   return <Listbox value={props.selectValue} onChange={props.onChange}>
     {({ open }) => (
@@ -36,7 +36,6 @@ export default function DropdownMenu(props: {selectValue?: DropdownMenuData, onC
           <Listbox.Options
             className='absolute focus:outline-none w-full mt-1 bg-gray-300 rounded-md max-h-[50vh] overflow-y-auto
                 lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent py-4'
-            style={{WebkitOverflowScrolling: 'touch'}}
           >
             {Object.values(props.dataList).map(data => (
               <Listbox.Option key={data.key} value={data}>

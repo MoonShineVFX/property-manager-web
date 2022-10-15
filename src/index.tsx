@@ -6,17 +6,11 @@ import {
 } from 'react-router-dom';
 import { Provider } from 'react-redux';
 
-// @ts-ignore
-import inobounce from 'inobounce';
-
 import './index.css';
 import App from './App';
 import RouteEdit from './routes/RouteEdit';
 import RouteInfo from './routes/RouteInfo';
 import { store } from './redux/store'
-
-
-inobounce.enable();
 
 
 const router = createBrowserRouter([
