@@ -27,24 +27,27 @@ const RouteInfo = React.lazy(() => import(
   './routes/RouteInfo')
 );
 
-
 const router = createBrowserRouter([
+    {
+      path: '/',
+      element: <Suspense fallback={LazyFallback}><App /></Suspense>,
+      children: [
+        {
+          path: 'info',
+          element: <RouteInfo />
+        },
+        {
+          path: 'edit',
+          element: <RouteEdit />
+        }
+      ],
+      errorElement: <div>ERROR</div>
+    }
+  ],
   {
-    path: '/',
-    element: <Suspense fallback={LazyFallback}><App /></Suspense>,
-    children: [
-      {
-        path: 'info',
-        element: <RouteInfo />
-      },
-      {
-        path: 'edit',
-        element: <RouteEdit />
-      }
-    ],
-    errorElement: <div>ERROR</div>
+    basename: process.env.PUBLIC_URL ? `/${process.env.PUBLIC_URL}` : ''
   }
-]);
+);
 
 
 const root = createRoot(

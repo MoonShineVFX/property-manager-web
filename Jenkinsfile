@@ -2,6 +2,7 @@ pipeline {
     environment {
         WEB_FOLDER = 'property'
         API_URL = '${PROPERTY_API_URL}'
+        PUBLIC_URL = '${PROPERTY_PUBLIC_URL}'
     }
     agent {
         docker {

@@ -16,7 +16,11 @@ module.exports = {
   mode: isDevelopment ? 'development' : 'production',
   devServer: {
     hot: isDevelopment,
-    historyApiFallback: true,
+    historyApiFallback: {
+      rewrites: [
+        {from: /.*/, to: `/${process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/' : ''}index.html`}
+      ]
+    },
     client: { overlay: true }
   },
   entry: {
@@ -73,6 +77,7 @@ module.exports = {
     isWebpackAnaysis && new BundleAnalyzerPlugin()
   ].filter(Boolean),
   output: {
+    publicPath: process.env.PUBLIC_URL ? `/${process.env.PUBLIC_URL}/` : '/',
     chunkFilename: 'js/[name].[contenthash:6].bundle.js',
     filename: 'js/[name].[contenthash:6].js',
     path: path.resolve(__dirname, 'build'),
