@@ -16,6 +16,10 @@ pipeline {
             }
         }
         stage('Build') {
+            environment {
+                NODE_ENV = "production"
+                BABEL_ENV = "production"
+            }
             steps {
                 sh 'npm run build'
             }

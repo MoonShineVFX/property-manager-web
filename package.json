@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "serve": "webpack serve",
-    "build": "set BABEL_ENV=production&& set NODE_ENV=production&& webpack",
+    "build": "webpack",
+    "build-local": "set BABEL_ENV=production&& set NODE_ENV=production&& webpack",
     "build-analysis": "set WEBPACK_ANALYSIS=true&& npm run build"
   },
   "repository": {
