@@ -1,7 +1,8 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, ChangeEvent, useEffect, useRef, useState } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, ChangeEvent, useEffect, useRef, useState, Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Dialog } from '@headlessui/react';
 
+import LazyFallback from "./components/LazyFallback";
 import Icon, { IconResourceKey } from './icons';
 import { useAppDispatch, useAppSelector } from './redux/store';
 import { disableInfoFirst, disableEditFirst, toggleSlide } from './redux/uiSlice';
@@ -87,7 +88,6 @@ export default function App(): JSX.Element {
   }
 
   const handleKeyDown = (event: KeyboardEvent | ReactKeyboardEvent) => {
-    console.log(event.key);
     switch (event.key) {
       case 'Enter':
         if (isScanDialogOpen) {
@@ -113,11 +113,13 @@ export default function App(): JSX.Element {
   return <div className='flex flex-col max-w-3xl h-full mx-auto'>
     {/* Content */}
     <div className='grow overflow-hidden'>
-      <Outlet />
+      <Suspense fallback={LazyFallback}>
+        <Outlet />
+      </Suspense>
     </div>
 
-    {/* Menu */}
-    <div className='drop-shadow-eli w-full max-w-3xl columns-2 gap-16 bg-gray-700 sm:rounded-t-xl sm:gap-0'>
+    {/* Footer Menu */}
+    <div className='drop-shadow-eli w-full max-w-3xl columns-2 gap-16 bg-gray-700 sm:rounded-t-xl sm:gap-0 pb-safe'>
       {/* Scan */}
       <button
         disabled={isEditMode && !selectedMember}
@@ -144,9 +146,9 @@ export default function App(): JSX.Element {
       initialFocus={scanCodeInput}
     >
       <div className='fixed inset-0 bg-black/25' aria-hidden='true' />
-      <div className={`${isUsingScanner ? '' : 'transition-all'} ease-out fixed -translate-y-1/2 p-4 w-full flex flex-col items-center`} style={{top: visualHeight / 2}}>
-        <Dialog.Panel className='drop-shadow-eli w-full max-w-sm rounded-xl bg-gray-600 p-6'>
-          <Dialog.Title className='text-gray-200 text-xl tracking-widest'>掃描或輸入產編</Dialog.Title>
+      <div className={`fixed -translate-y-1/2 p-4 w-full flex flex-col items-center top-0`}>
+        <Dialog.Panel className={`${isUsingScanner ? '' : 'transition-all'} ease-out drop-shadow-eli w-full max-w-sm rounded-xl bg-gray-600 p-6`} style={{transform: `translate3d(0, ${visualHeight / 2}px, 0)`}}>
+          <Dialog.Title className='text-gray-200 text-xl tracking-widest select-none'>掃描或輸入產編</Dialog.Title>
           <div>
             <input ref={scanCodeInput}
                    className='tracking-widest focus:outline-none w-full rounded-md text-4xl sm:text-5xl p-2 my-6 text-center bg-gray-800 text-teal-500 placeholder:text-gray-600'

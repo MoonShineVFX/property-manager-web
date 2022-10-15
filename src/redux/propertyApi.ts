@@ -28,8 +28,8 @@ export const propertyApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.API_URL,
+    credentials: 'include',
     prepareHeaders: (headers) => {
-      headers.set('authorization', `auth_token ${process.env.API_TOKEN}`);
       headers.set('Content-Type', 'application/x-www-form-urlencoded');
       return headers;
     }

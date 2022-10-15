@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   createBrowserRouter,
@@ -7,16 +7,31 @@ import {
 import { Provider } from 'react-redux';
 
 import './index.css';
-import App from './App';
-import RouteEdit from './routes/RouteEdit';
-import RouteInfo from './routes/RouteInfo';
 import { store } from './redux/store'
+import LazyFallback from "./components/LazyFallback";
+
+
+const App = React.lazy(() => import(
+  /* webpackChunkName: "app" */
+  /* webpackPrefetch: true */
+  './App')
+);
+const RouteEdit = React.lazy(() => import(
+  /* webpackChunkName: "route-edit" */
+  /* webpackPrefetch: true */
+  './routes/RouteEdit')
+);
+const RouteInfo = React.lazy(() => import(
+  /* webpackChunkName: "route-info" */
+  /* webpackPrefetch: true */
+  './routes/RouteInfo')
+);
 
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Suspense fallback={LazyFallback}><App /></Suspense>,
     children: [
       {
         path: 'info',
@@ -36,6 +51,7 @@ const root = createRoot(
   document.getElementById('root') as HTMLElement
 );
 
+document.getElementById('suspense')?.remove();
 root.render(
   <Provider store={store}>
     <RouterProvider router={router}/>
