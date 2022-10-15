@@ -10,8 +10,8 @@ module.exports = {
       },
       keyframes: {
         slide: {
-          '0%': { transform: 'translateY(100%)' },
-          '100%': { transform: 'translateY(0%)' }
+          '0%': { transform: 'translate3d(0, 100%, 0)' },
+          '100%': { transform: 'translate3d(0, 0%, 0)' }
         }
       },
       animation: {
