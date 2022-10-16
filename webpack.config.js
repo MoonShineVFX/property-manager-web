@@ -40,7 +40,7 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          isDevelopment ? MiniCssExtractPlugin.loader : MiniCssExtractPlugin.loader,
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
           'css-loader', 'postcss-loader'
         ],
       },
@@ -66,7 +66,10 @@ module.exports = {
       },
       chunks: 'all'
     },
-    minimizer: [new CssMinimizerPlugin()]
+    minimizer: [
+      '...',
+      new CssMinimizerPlugin(),
+    ],
   },
   plugins: [
     isDevelopment && new ReactRefreshPlugin(),
