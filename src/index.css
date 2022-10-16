@@ -2,10 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-    height: 100%;
-    overflow: hidden;
-    position: relative;
+
+@layer base {
+    html {
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
 }
 
 @layer utilities {

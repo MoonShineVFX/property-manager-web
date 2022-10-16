@@ -8,7 +8,7 @@ import { Provider } from 'react-redux';
 
 import './index.css';
 import { store } from './redux/store'
-import LazyFallback from "./components/LazyFallback";
+import { LoadingIndicator } from "./icons";
 
 
 const App = React.lazy(() => import(
@@ -30,7 +30,17 @@ const RouteInfo = React.lazy(() => import(
 const router = createBrowserRouter([
     {
       path: '/',
-      element: <Suspense fallback={LazyFallback}><App /></Suspense>,
+      element: <Suspense
+                fallback={
+                  <div className='grid place-content-center h-full text-xl text-gray-500'>
+                    <div className='flex items-center gap-2'>
+                      <LoadingIndicator className='w-[1.5rem] h-[1.5rem] text-gray-700 fill-teal-600' />
+                      讀取中...
+                    </div>
+                  </div>
+                }>
+                <App />
+              </Suspense>,
       children: [
         {
           path: 'info',

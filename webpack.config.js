@@ -1,3 +1,5 @@
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ReactRefreshPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
@@ -16,6 +18,7 @@ module.exports = {
   mode: isDevelopment ? 'development' : 'production',
   devServer: {
     hot: isDevelopment,
+    port: 8080,
     historyApiFallback: {
       rewrites: [
         {from: /.*/, to: `/${process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/' : ''}index.html`}
@@ -36,7 +39,10 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader'],
+        use: [
+          isDevelopment ? MiniCssExtractPlugin.loader : MiniCssExtractPlugin.loader,
+          'css-loader', 'postcss-loader'
+        ],
       },
     ],
   },
@@ -59,10 +65,14 @@ module.exports = {
         }
       },
       chunks: 'all'
-    }
+    },
+    minimizer: [new CssMinimizerPlugin()]
   },
   plugins: [
     isDevelopment && new ReactRefreshPlugin(),
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash].css'
+    }),
     new CopyPlugin({
       patterns: [
         { from: 'public', to: '.' },
