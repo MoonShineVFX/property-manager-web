@@ -39,8 +39,8 @@ export function FetchStateSwitcher(props: FetchStateSwitcherProps): JSX.Element 
 
   // Fetching
   if (props.isFetching) return <div className=''>
-    <div className=''>
-      <LoadingIndicator className='w-48 h-48 text-gray-700 fill-teal-600' />
+    <div>
+      <LoadingIndicator className='w-48 h-48 text-gray-700 fill-gray-500' />
     </div>
   </div>
 

@@ -5,9 +5,10 @@
   "main": "src/index.ts",
   "scripts": {
     "serve": "webpack serve",
+    "serve-prod": "set BABEL_ENV=production&& set NODE_ENV=production&& webpack serve",
     "build": "webpack",
     "build-local": "set BABEL_ENV=production&& set NODE_ENV=production&& webpack",
-    "build-analysis": "set WEBPACK_ANALYSIS=true&& npm run build"
+    "build-analysis": "set WEBPACK_ANALYSIS=true&& npm run build-local"
   },
   "repository": {
     "type": "git",
@@ -29,7 +30,9 @@
     "babel-loader": "^8.2.5",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.1",
+    "css-minimizer-webpack-plugin": "^4.2.2",
     "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.6.1",
     "postcss": "^8.4.18",
     "postcss-loader": "^7.0.1",
     "react-refresh": "^0.14.0",
