@@ -5,8 +5,8 @@ import { Dialog } from '@headlessui/react';
 import LazyFallback from "./components/LazyFallback";
 import Icon, { IconResourceKey } from './icons';
 import { useAppDispatch, useAppSelector } from './redux/store';
-import { disableInfoFirst, disableEditFirst, toggleSlide } from './redux/uiSlice';
-import { useEditItemInfoMutation, useGetItemInfoMutation } from './redux/propertyApi';
+import { setInfoSn } from './redux/uiSlice';
+import { useEditItemInfoMutation } from './redux/api';
 
 
 const menuRoutes = [
@@ -28,12 +28,12 @@ export default function App(): JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { selectedMember, isEditFirst, isInfoFirst } = useAppSelector((state) => state.ui);
+  const { selectedMember } = useAppSelector((state) => state.ui);
   const scanCodeInput = useRef<HTMLInputElement>(null);
   const [scanCodeInputValue, setScanCodeInputValue] = useState('');
   const isEditMode = location.pathname === '/edit';
   const [editItem] = useEditItemInfoMutation({fixedCacheKey: 'shared-edit'});
-  const [getItemInfo] = useGetItemInfoMutation({fixedCacheKey: 'shared-info'});
+
 
   // Default to /info
   useEffect(() => {
@@ -63,11 +63,8 @@ export default function App(): JSX.Element {
 
     if (scanValue) {
       if (!isEditMode) {
-        if (isInfoFirst) dispatch(disableInfoFirst());
-        getItemInfo(scanValue);
-        dispatch(toggleSlide(true));
+        dispatch(setInfoSn(scanValue));
       } else {
-        if (isEditFirst) dispatch(disableEditFirst());
         editItem({
           sn: scanValue,
           oeid: selectedMember!.value.eid

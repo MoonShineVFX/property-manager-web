@@ -17,7 +17,7 @@ export default function DropdownMenu(props: {selectValue?: DropdownMenuData, onC
 
   return <Listbox value={props.selectValue} onChange={props.onChange}>
     {({ open }) => (
-      <div className={`relative max-w-xs w-full mx-4 ${open ? 'z-50' : ''}`}>
+      <div className={`relative max-w-xs w-full mx-4 ${open ? 'z-10' : ''}`}>
         <Listbox.Button
           className='relative flex py-1 w-full rounded-md cursor-pointer focus:outline-none bg-gray-300
               text-gray-500 text-2xl items-center hover:bg-gray-200 transition-colors'

@@ -3,18 +3,22 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import { DropdownMenuData } from '../components/DropdownMenu';
 
 
+export interface EditItemResult {
+  state: 'SUCCESS' | 'ERROR' | 'LOADING';
+  sn: string;
+}
+
 export interface UIState {
-  isInfoFirst: boolean;
-  isEditFirst: boolean;
+  infoSn?: string;
   isSlideActive: boolean;
   selectedTeam?: DropdownMenuData;
   selectedMember?: DropdownMenuData;
+  editItemResultList: EditItemResult[]
 }
 
 const initialState: UIState = {
-  isInfoFirst: true,
-  isEditFirst: true,
-  isSlideActive: false
+  isSlideActive: false,
+  editItemResultList: []
 }
 
 export const uiSlice = createSlice({
@@ -29,15 +33,22 @@ export const uiSlice = createSlice({
     },
     setSelectedMember: (state, action: PayloadAction<DropdownMenuData>) => {
       state.selectedMember = action.payload;
+      state.editItemResultList = []; // Maybe not suitable?
     },
-    disableInfoFirst: (state) => {
-      state.isInfoFirst = false;
+    setInfoSn: (state, action: PayloadAction<string | undefined>) => {
+      state.infoSn = action.payload;
     },
-    disableEditFirst: (state) => {
-      state.isEditFirst = false;
+    addEditItemResult: (state, action: PayloadAction<EditItemResult>) => {
+      state.editItemResultList = [...state.editItemResultList, action.payload];
+    },
+    updateLastEditItemResult: (state, action: PayloadAction<EditItemResult['state']>) => {
+      state.editItemResultList = state.editItemResultList.map((editItemResult, idx, editItemResultList) => {
+        if (idx + 1 !== editItemResultList.length) return editItemResult;
+        return {...editItemResult, state: action.payload};
+      })
     }
   }
 })
 
-export const { toggleSlide, setSelectedTeam, setSelectedMember, disableEditFirst, disableInfoFirst } = uiSlice.actions;
+export const { toggleSlide, setSelectedTeam, setSelectedMember, setInfoSn, addEditItemResult, updateLastEditItemResult } = uiSlice.actions;
 export default uiSlice.reducer;

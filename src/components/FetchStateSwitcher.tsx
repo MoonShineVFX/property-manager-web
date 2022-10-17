@@ -6,10 +6,10 @@ import { SerializedError } from '@reduxjs/toolkit';
 
 type FetchStateSwitcherProps = {
   isFirst?: boolean,
-  error: FetchBaseQueryError | SerializedError | undefined,
-  isFetching: boolean,
+  error?: FetchBaseQueryError | SerializedError | undefined,
+  isFetching?: boolean,
   resultElement?: JSX.Element,
-  errorMessage: string,
+  errorMessage?: string,
   welcomeMessage?: string | string[]
 }
 
@@ -27,7 +27,7 @@ export function FetchStateSwitcher(props: FetchStateSwitcherProps): JSX.Element 
   if (props.error) return <div className='cursor-default select-none'>
     <div className='flex flex-col items-center'>
       <Icon className='w-20 h-20 stroke-red-500 my-2' icon='error' />
-      <div className='text-gray-500 text-3xl'>{props.errorMessage}</div>
+      <div className='text-gray-500 text-3xl'>{props.errorMessage ?? '發生錯誤'}</div>
       {'status' in props.error && <div className='text-gray-500 text'>{props.error.status}</div>}
       {'data' in props.error && typeof props.error.data === 'string' &&
         (props.error.data.includes('div') ?

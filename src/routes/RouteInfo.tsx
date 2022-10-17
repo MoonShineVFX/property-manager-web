@@ -1,26 +1,33 @@
 import React, { useEffect } from 'react';
+import { skipToken } from "@reduxjs/toolkit/query";
 
-import { useGetItemInfoMutation } from '../redux/propertyApi';
+import { useGetItemInfoQuery } from '../redux/api';
 import { useAppSelector, useAppDispatch } from '../redux/store'
 import { toggleSlide } from '../redux/uiSlice';
 import { FetchStateSwitcher } from '../components/FetchStateSwitcher';
 
 
+
 export default function RouteInfo(): JSX.Element {
-  const { isInfoFirst, isSlideActive } = useAppSelector((state) => state.ui);
-  const [_, { data: itemInfo, error, isLoading }] = useGetItemInfoMutation({fixedCacheKey: 'shared-info'});
+  const { isSlideActive, infoSn } = useAppSelector((state) => state.ui);
+  const { data, error, isFetching, isUninitialized } = useGetItemInfoQuery(infoSn ?? skipToken);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+      dispatch(toggleSlide(false))
+    }, []);
 
   return <div className='flex h-full justify-center items-center'>
     <FetchStateSwitcher
       welcomeMessage='請輸入產編查詢'
       errorMessage='查詢發生錯誤'
-      isFirst={isInfoFirst}
+      isFirst={isUninitialized}
       error={error}
-      isFetching={isLoading}
+      isFetching={isFetching}
       resultElement={
-        itemInfo && <div className='flex flex-col items-center h-full px-4 overflow-y-auto overflow-x-hidden
+        data && <div className='flex flex-col items-center h-full px-4 overflow-y-auto overflow-x-hidden
                          lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent w-full'>
-          <ItemDetail itemInfo={itemInfo} isSlideActive={isSlideActive} />
+          <ItemDetail itemInfo={data} isSlideActive={isSlideActive} />
         </div>
       }
     />
