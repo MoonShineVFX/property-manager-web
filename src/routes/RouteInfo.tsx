@@ -1,21 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import { useGetItemInfoQuery } from '../redux/api';
-import { useAppSelector, useAppDispatch } from '../redux/store'
-import { toggleSlide } from '../redux/uiSlice';
+import { useAppSelector } from '../redux/store'
 import { FetchStateSwitcher } from '../components/FetchStateSwitcher';
 
 
 
 export default function RouteInfo(): JSX.Element {
-  const { isSlideActive, infoSn } = useAppSelector((state) => state.ui);
-  const { data, error, isFetching, isUninitialized } = useGetItemInfoQuery(infoSn ?? skipToken);
-  const dispatch = useAppDispatch();
+  const [isSlide, setIsSlide] = useState(false);
+  const {infoSn} = useAppSelector((state) => state.ui);
+  const {data, error, isFetching, isUninitialized} = useGetItemInfoQuery(infoSn ?? skipToken);
 
   useEffect(() => {
-      dispatch(toggleSlide(false))
-    }, []);
+    const timeout = setTimeout(() => setIsSlide(true), 500);
+    return () => clearTimeout(timeout);
+  }, []);
 
   return <div className='flex h-full justify-center items-center'>
     <FetchStateSwitcher
@@ -27,7 +27,7 @@ export default function RouteInfo(): JSX.Element {
       resultElement={
         data && <div className='flex flex-col items-center h-full px-4 overflow-y-auto overflow-x-hidden
                          lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent w-full'>
-          <ItemDetail itemInfo={data} isSlideActive={isSlideActive} />
+          <ItemDetail itemInfo={data} isSlideActive={isSlide}/>
         </div>
       }
     />
@@ -36,17 +36,20 @@ export default function RouteInfo(): JSX.Element {
 
 
 function ItemDetail(props: {itemInfo: {[key: string]: string}, isSlideActive: boolean}): JSX.Element {
-  const { itemInfo } = props;
-  const animeStyle = props.isSlideActive ? 'animate-slide-in' : '';
-  const dispatch = useAppDispatch();
+  const {itemInfo} = props;
+  const [isSlide, setIsSlide] = useState(false);
+  const animeStyle = isSlide ? 'animate-slide-in-up' : '';
 
   // Disable slide animation when switching route
   useEffect(() => {
-    const timeout = setTimeout(() => dispatch(toggleSlide(false)), 1000);
+    if (!props.isSlideActive) return;
+    setIsSlide(true);
+    const timeout = setTimeout(() => setIsSlide(false), 1000);
     return () => clearTimeout(timeout);
-  }, [])
+  }, [itemInfo])
 
-  return <div className={`${animeStyle} w-full drop-shadow-eli max-w-md grow my-12 rounded-xl px-8 py-4 bg-gray-300 divide-y-[0.1rem] divide-gray-400/50`}>
+  return <div
+    className={`${animeStyle} w-full drop-shadow-eli max-w-md grow my-12 rounded-xl px-8 py-4 bg-gray-300 divide-y-[0.1rem] divide-gray-400/50`}>
     {Object.keys(itemInfo).map(key => {
       if (!isNaN(key as any)) return null;
       return <div key={key} className='flex py-4 items-center'>

@@ -1,12 +1,13 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, ChangeEvent, useEffect, useRef, useState, Suspense } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useState, Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Dialog } from '@headlessui/react';
 
+import ScanCodeDialog from "./components/ScanCodeDialog";
 import LazyFallback from "./components/LazyFallback";
 import Icon, { IconResourceKey } from './icons';
 import { useAppDispatch, useAppSelector } from './redux/store';
-import { setInfoSn } from './redux/uiSlice';
+import { setInfoSn, applyMember } from './redux/uiSlice';
 import { useEditItemInfoMutation } from './redux/api';
+import Notifications, { NotificationPackage } from "./components/Notifications";
 
 
 const menuRoutes = [
@@ -24,13 +25,11 @@ const menuRoutes = [
 export default function App(): JSX.Element {
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isUsingScanner, setIsUsingScanner] = useState(false);
-  const [visualHeight, setVisualHeight] = useState(window.innerHeight);
+  const [notificationPackage, setNotificationPackage] = useState<NotificationPackage>();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { selectedMember } = useAppSelector((state) => state.ui);
-  const scanCodeInput = useRef<HTMLInputElement>(null);
-  const [scanCodeInputValue, setScanCodeInputValue] = useState('');
   const isEditMode = location.pathname === '/edit';
   const [editItem] = useEditItemInfoMutation({fixedCacheKey: 'shared-edit'});
 
@@ -42,57 +41,43 @@ export default function App(): JSX.Element {
     }
   }, [location]);
 
-  // Clean scancode input
-  useEffect(() => {
-    if (!isScanDialogOpen) setScanCodeInputValue('');
-  }, [isScanDialogOpen]);
-
   // Event Listeners
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    window.visualViewport?.addEventListener('resize', handleVisualViewportResize);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.visualViewport?.removeEventListener('resize', handleVisualViewportResize);
     }
   }, []);
 
   // Handlers
-  const onScanButtonClick = () => {
-    const scanValue = scanCodeInput.current!.value;
-
-    if (scanValue) {
+  const onScanDialogSubmit = (scanCode: string) => {
+    if (scanCode) {
       if (!isEditMode) {
-        dispatch(setInfoSn(scanValue));
+        dispatch(setInfoSn(scanCode));
       } else {
-        editItem({
-          sn: scanValue,
-          oeid: selectedMember!.value.eid
-        });
+        if (scanCode.startsWith('o')) {
+          dispatch(applyMember(scanCode.slice(1))).then(result => {
+            if ('error' in result) {
+              setNotificationPackage({isSuccess: false});
+              return;
+            }
+            setNotificationPackage({name: result.payload, isSuccess: true});
+          })
+        } else {
+          editItem({
+            sn: scanCode,
+            oeid: selectedMember!.value.eid
+          });
+        }
       }
     }
 
+    if (isUsingScanner) setIsUsingScanner(false);
     setIsScanDialogOpen(false);
-  }
-
-  const handleScanCodeInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (isUsingScanner) {
-      setScanCodeInputValue(event.target.value);
-      return;
-    }
-    const result = event.target.value.replace(/\D/g, '');
-    setScanCodeInputValue(result);
   }
 
   const handleKeyDown = (event: KeyboardEvent | ReactKeyboardEvent) => {
     switch (event.key) {
-      case 'Enter':
-        if (isScanDialogOpen) {
-          onScanButtonClick();
-          event.preventDefault();
-        }
-        if (isUsingScanner) setIsUsingScanner(false);
-        break;
       case '!':
         setIsUsingScanner(true);
         if (!isScanDialogOpen) setIsScanDialogOpen(true);
@@ -101,10 +86,6 @@ export default function App(): JSX.Element {
       default:
         break;
     }
-  }
-
-  const handleVisualViewportResize = () => {
-    window.visualViewport && setVisualHeight(window.visualViewport?.height);
   }
 
   return <div className='flex flex-col max-w-3xl h-full mx-auto'>
@@ -131,48 +112,25 @@ export default function App(): JSX.Element {
         <RouteButton key={route.path}
                      text={route.text} routeTarget={route.path}
                      active={location.pathname === route.path}
-                     onClick={() => (location.pathname !== route.path) && navigate(route.path)} />
+                     onClick={() => (location.pathname !== route.path) && navigate(route.path)}/>
       )}
     </div>
 
     {/* Dialog */}
-    <Dialog
-      open={isScanDialogOpen}
-      onClose={() => setIsScanDialogOpen(false)}
-      className='relative z-50'
-      initialFocus={scanCodeInput}
-    >
-      <div className='fixed inset-0 bg-black/25' aria-hidden='true' />
-      <div className={`fixed -translate-y-1/2 p-4 w-full flex flex-col items-center top-0`}>
-        <Dialog.Panel className={`${isUsingScanner ? '' : 'transition-all'} ease-out drop-shadow-eli w-full max-w-sm rounded-xl bg-gray-600 p-6`} style={{transform: `translate3d(0, ${visualHeight / 2}px, 0)`}}>
-          <Dialog.Title className='text-gray-200 text-xl tracking-widest select-none'>掃描或輸入產編</Dialog.Title>
-          <div>
-            <input ref={scanCodeInput}
-                   className='tracking-widest focus:outline-none w-full rounded-md text-4xl sm:text-5xl p-2 my-6 text-center bg-gray-800 text-teal-500 placeholder:text-gray-600'
-                   type='text'
-                   pattern={isUsingScanner ? undefined : '[0-9]*'}
-                   placeholder='00000000'
-                   value={scanCodeInputValue}
-                   onChange={handleScanCodeInput}
-                   onKeyDown={handleKeyDown}
-                   enterKeyHint='go'
-            />
-          </div>
-          <div className='text-right'>
-            <button
-              onClick={onScanButtonClick}
-              className='bg-gray-400 px-4 py-2 rounded-md hover:bg-teal-700 hover:text-gray-300 text-xl text-gray-700 tracking-widest indent-[0.1em]'
-            >
-              {menuRoutes.map(v => {
-                if (v.path !== location.pathname) return null;
-                if (isEditMode) return <span key={v.text}>{`${v.text}至 `}<span className='font-bold'>{selectedMember?.name}</span></span>;
-                return v.text;
-              })}
-            </button>
-          </div>
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+    <ScanCodeDialog open={isScanDialogOpen}
+                    onClose={() => setIsScanDialogOpen(false)}
+                    isUsingScanner={isUsingScanner}
+                    onSubmit={onScanDialogSubmit}
+                    submitButtonContent={menuRoutes.map(v => {
+                      if (v.path !== location.pathname) return null;
+                      if (isEditMode) return <span key={v.text}>{`${v.text}至 `}<span
+                        className='font-bold'>{selectedMember?.name}</span></span>;
+                      return v.text;
+                    })}
+                    isEdit={isEditMode}/>
+
+    {/* Notifications */}
+    <Notifications payload={notificationPackage}/>
   </div>;
 }
 

@@ -15,8 +15,4 @@
     .pb-safe {
         padding-bottom: env(safe-area-inset-bottom);
     }
-
-    .translate-hw {
-        transform: translate3d(0, 0, 0);
-    }
 }

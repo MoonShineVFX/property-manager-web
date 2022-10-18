@@ -11,7 +11,7 @@ const dotenv = require('dotenv')
 dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-const isWebpackAnaysis = process.env.WEBPACK_ANALYSIS
+const isWebpackAnalysis = process.env.WEBPACK_ANALYSIS
 
 
 module.exports = {
@@ -58,9 +58,9 @@ module.exports = {
           name: 'framework',
           chunks: 'all',
         },
-        headlessUiVendor: {
-          test: /[\\/]node_modules[\\/]@headlessui[\\/]/,
-          name: 'headless',
+        uiVendor: {
+          test: /[\\/]node_modules[\\/](@headlessui|@radix-ui)[\\/]/,
+          name: 'ui',
           chunks: 'all',
         }
       },
@@ -87,7 +87,7 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env)
     }),
-    isWebpackAnaysis && new BundleAnalyzerPlugin()
+    isWebpackAnalysis && new BundleAnalyzerPlugin()
   ].filter(Boolean),
   output: {
     publicPath: process.env.PUBLIC_URL ? `/${process.env.PUBLIC_URL}/` : '/',

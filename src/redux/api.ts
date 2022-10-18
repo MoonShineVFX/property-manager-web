@@ -1,27 +1,26 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { DropdownMenuData } from '../components/DropdownMenu';
-import { addEditItemResult, updateLastEditItemResult, toggleSlide } from "./uiSlice";
 
 
-interface Member {
+export interface Member {
   eid: string;
   truename: string;
   supervisor: boolean;
 }
 
-interface MemberGroup {
+interface MemberTeam {
   tid: string;
   teamname: string;
   member: Member[];
 }
 
-type MembersResponse = {[key: string]: MemberGroup};
+type MembersResponse = { [key: string]: MemberTeam };
 
 type ItemInfo = {[key: string]: string};
 
-interface EditItemArgs {
-  sn: string;
-  oeid: string;
+type EditItemArgs = {
+  sn: string,
+  oeid: string
 }
 
 
@@ -43,10 +42,7 @@ export const api = createApi({
         body: `sn=${sn}`,
         validateStatus: (response, result) => result !== null
       }),
-      providesTags: (result, error, arg) => error ? ['FETCH_ERROR'] : [{type: 'Item', id: arg}],
-      async onCacheEntryAdded(_, { dispatch}) {
-        dispatch(toggleSlide(true));
-      }
+      providesTags: (result, error, arg) => error ? ['FETCH_ERROR'] : [{type: 'Item', id: arg}]
     }),
     getMembers: builder.query<DropdownMenuData[], void>({
       query: () => ({
@@ -55,10 +51,10 @@ export const api = createApi({
       }),
       transformResponse: (response: string) => {
         const membersResponse: MembersResponse = JSON.parse(response.replace('<!DOCTYPE html>', ''));
-        return Object.values(membersResponse).map(group => ({
-          key: group.tid,
-          name: group.teamname,
-          value: group.member.map(member => ({
+        return Object.values(membersResponse).map(team => ({
+          key: team.tid,
+          name: team.teamname,
+          value: team.member.map(member => ({
             key: member.eid,
             name: member.truename,
             value: member
@@ -74,16 +70,7 @@ export const api = createApi({
         responseHandler: (response) => response.text(),
         validateStatus: (response, result) => result.includes('Successfully'),
       }),
-      invalidatesTags: (result, error, arg) => error ? [] : [{type: 'Item', id: arg.sn}],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        dispatch(addEditItemResult({state: 'LOADING', sn: arg.sn}));
-        let isSuccess = false;
-        try {
-          await queryFulfilled;
-          isSuccess = true;
-        } catch {}
-        dispatch(updateLastEditItemResult(isSuccess ? 'SUCCESS' : 'ERROR'));
-      },
+      invalidatesTags: (result, error, arg) => error ? [] : [{type: 'Item', id: arg.sn}]
     })
   })
 })
