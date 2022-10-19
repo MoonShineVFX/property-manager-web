@@ -38,12 +38,17 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
   const onSubmit = (event: FormEvent) => {
     props.onSubmit(scanCodeInput.current!.value);
     event.preventDefault()
-    setIsInvalid(false);
+    resetDefaultState(false);
   }
 
   const onClose = () => {
-    setIsInvalid(false);
+    resetDefaultState(false);
     props.onClose();
+  }
+  
+  const resetDefaultState => {
+    setIsInvalid(false);
+    setIsWorkerMode(false);
   }
 
   return <Dialog
