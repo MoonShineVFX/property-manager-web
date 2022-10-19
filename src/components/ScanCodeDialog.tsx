@@ -46,7 +46,7 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
     props.onClose();
   }
   
-  const resetDefaultState => {
+  const resetDefaultState = () => {
     setIsInvalid(false);
     setIsWorkerMode(false);
   }
