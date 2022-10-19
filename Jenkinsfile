@@ -3,6 +3,8 @@ pipeline {
         WEB_FOLDER = 'property'
         API_URL = "${PROPERTY_API_URL}"
         PUBLIC_URL = "${PROPERTY_PUBLIC_URL}"
+        NODE_ENV = "production"
+        BABEL_ENV = "production"
     }
     agent {
         docker {
@@ -12,14 +14,10 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                sh 'npm install'
+                sh 'npm ci'
             }
         }
         stage('Build') {
-            environment {
-                NODE_ENV = "production"
-                BABEL_ENV = "production"
-            }
             steps {
                 sh 'npm run build'
             }

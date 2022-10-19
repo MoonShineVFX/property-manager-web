@@ -1,5 +1,5 @@
 import { Dialog } from "@headlessui/react";
-import React, { FormEvent, useEffect, useRef, useState } from "react";
+import React, { FormEvent, useDeferredValue, useEffect, useRef, useState, useTransition } from 'react';
 
 
 type ScanCodeDialogProps = {
@@ -17,6 +17,8 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
   const [isWorkerMode, setIsWorkerMode] = useState(false);
   const scanCodeInput = useRef<HTMLInputElement>(null);
   const [visualHeight, setVisualHeight] = useState(window.innerHeight);
+  const [_, startInputTransition] = useTransition();
+  const deferredVisualHeight = useDeferredValue(visualHeight);
 
   useEffect(() => {
     window.visualViewport?.addEventListener('resize', handleVisualViewportResize);
@@ -30,19 +32,21 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
   }
 
   const handleInputChange = (scanCodeValue: string) => {
-    if (props.isUsingScanner || !props.isEdit) return;
-    const isO = scanCodeValue.startsWith('o');
-    if (isO !== isWorkerMode) setIsWorkerMode(isO);
+    startInputTransition(() => {
+      if (props.isUsingScanner || !props.isEdit) return;
+      const isO = scanCodeValue.startsWith('o');
+      if (isO !== isWorkerMode) setIsWorkerMode(isO);
+    });
   }
 
   const onSubmit = (event: FormEvent) => {
     props.onSubmit(scanCodeInput.current!.value);
     event.preventDefault()
-    resetDefaultState(false);
+    resetDefaultState();
   }
 
   const onClose = () => {
-    resetDefaultState(false);
+    resetDefaultState();
     props.onClose();
   }
   
@@ -61,7 +65,7 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
     <div className={`fixed -translate-y-1/2 p-4 w-full flex flex-col items-center top-0`}>
       <Dialog.Panel
         className={`${props.isUsingScanner ? '' : 'transition-all'} ease-out drop-shadow-eli w-full max-w-sm rounded-xl bg-gray-600 p-6`}
-        style={{transform: `translate3d(0, ${visualHeight / 2}px, 0)`}}>
+        style={{transform: `translate3d(0, ${deferredVisualHeight / 2}px, 0)`}}>
         <Dialog.Title className='text-gray-200 text-xl tracking-widest select-none'>
           請{props.isUsingScanner ? '掃描' : '輸入'}產編{props.isEdit && '或同事編號'}
         </Dialog.Title>

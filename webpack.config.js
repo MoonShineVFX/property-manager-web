@@ -1,8 +1,6 @@
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ReactRefreshPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack')
 const path = require('path');
@@ -72,7 +70,8 @@ module.exports = {
     ],
   },
   plugins: [
-    isDevelopment && new ReactRefreshPlugin(),
+    isDevelopment && new (require('@pmmmwh/react-refresh-webpack-plugin'))(),
+    isWebpackAnalysis && new (require('webpack-bundle-analyzer')).BundleAnalyzerPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css'
     }),
@@ -86,8 +85,7 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env)
-    }),
-    isWebpackAnalysis && new BundleAnalyzerPlugin()
+    })
   ].filter(Boolean),
   output: {
     publicPath: process.env.PUBLIC_URL ? `/${process.env.PUBLIC_URL}/` : '/',
