@@ -20,7 +20,8 @@ type ItemInfo = {[key: string]: string};
 
 type EditItemArgs = {
   sn: string,
-  oeid: string
+  oeid?: string,
+  note?: string
 }
 
 
@@ -42,7 +43,13 @@ export const api = createApi({
         body: `sn=${sn}`,
         validateStatus: (response, result) => result !== null
       }),
-      providesTags: (result, error, arg) => error ? ['FETCH_ERROR'] : [{type: 'Item', id: arg}]
+      providesTags: (result, error, arg) => error ? ['FETCH_ERROR'] : [{type: 'Item', id: arg}],
+      transformResponse: (response: ItemInfo) => {
+        const { truename, note, ...others } = response;
+        return {
+          truename, note, ...others
+        }
+      }
     }),
     getMembers: builder.query<DropdownMenuData[], void>({
       query: () => ({
@@ -66,7 +73,7 @@ export const api = createApi({
       query: (args) => ({
         url: 'item_edit',
         method: 'POST',
-        body: `action=save&sn=${args.sn}&oeid=${args.oeid}`,
+        body: `action=save&sn=${args.sn}${args.oeid ? '&oeid=' + args.oeid : ''}${args.note ? '&note=' + args.note : ''}`,
         responseHandler: (response) => response.text(),
         validateStatus: (response, result) => result.includes('Successfully'),
       }),

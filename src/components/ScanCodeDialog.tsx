@@ -75,13 +75,14 @@ export default function ScanCodeDialog(props: ScanCodeDialogProps): JSX.Element 
                    className={'tracking-widest border-4 focus:outline-none w-full rounded-md text-4xl sm:text-5xl p-2 ' +
                      'my-6 text-center bg-gray-800 text-teal-500 placeholder:text-gray-600 border-transparent ' +
                      (isInvalid ? 'invalid:border-red-500/60' : '')}
-                   type='text'
+                   type="text"
                    pattern={props.isUsingScanner ? undefined : (props.isEdit ? 'o?\\d{8}' : '\\d{8}')}
-                   placeholder='00000000'
-                   enterKeyHint='go'
-                   autoCorrect='off'
-                   autoComplete='off'
-                   autoCapitalize='none'
+                   placeholder="00000000"
+                   enterKeyHint="go"
+                   spellCheck={false}
+                   autoCorrect="off"
+                   autoComplete="off"
+                   autoCapitalize="none"
                    required={true}
                    onChange={event => handleInputChange(event.target.value)}
             />

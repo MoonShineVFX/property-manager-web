@@ -1,13 +1,13 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useState, Suspense } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useState, Suspense } from 'react'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 
-import ScanCodeDialog from "./components/ScanCodeDialog";
-import LazyFallback from "./components/LazyFallback";
-import Icon, { IconResourceKey } from './icons';
-import { useAppDispatch, useAppSelector } from './redux/store';
-import { setInfoSn, applyMember } from './redux/uiSlice';
-import { useEditItemInfoMutation } from './redux/api';
-import Notifications, { NotificationPackage } from "./components/Notifications";
+import ScanCodeDialog from "./components/ScanCodeDialog"
+import LazyFallback from "./components/LazyFallback"
+import Icon, { IconResourceKey } from './icons'
+import { useAppDispatch, useAppSelector } from './redux/store'
+import { setInfoSn, applyMember, showInfo, showError } from './redux/uiSlice'
+import { useEditItemInfoMutation } from './redux/api'
+import Notifications from "./components/Notifications"
 
 
 const menuRoutes = [
@@ -25,13 +25,12 @@ const menuRoutes = [
 export default function App(): JSX.Element {
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isUsingScanner, setIsUsingScanner] = useState(false);
-  const [notificationPackage, setNotificationPackage] = useState<NotificationPackage>();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { selectedMember } = useAppSelector((state) => state.ui);
   const isEditMode = location.pathname === '/edit';
-  const [editItem] = useEditItemInfoMutation({fixedCacheKey: 'shared-edit'});
+  const [editItem] = useEditItemInfoMutation();
 
 
   // Default to /info
@@ -58,10 +57,10 @@ export default function App(): JSX.Element {
         if (scanCode.startsWith('o')) {
           dispatch(applyMember(scanCode.slice(1))).then(result => {
             if ('error' in result) {
-              setNotificationPackage({isSuccess: false});
+              dispatch(showError('掃描同事編號失敗'))
               return;
             }
-            setNotificationPackage({name: result.payload, isSuccess: true});
+            dispatch(showInfo(`選擇 ${result.payload}`))
           })
         } else {
           editItem({
@@ -130,7 +129,7 @@ export default function App(): JSX.Element {
                     isEdit={isEditMode}/>
 
     {/* Notifications */}
-    <Notifications payload={notificationPackage}/>
+    <Notifications/>
   </div>;
 }
 
