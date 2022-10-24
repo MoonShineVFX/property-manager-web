@@ -102,7 +102,7 @@ export const uiSlice = createSlice({
         api.endpoints.editItemInfo.matchFulfilled,
         (state, action) => {
           if (action.meta.arg.originalArgs.note != undefined) {
-            state.notifications.push({isSuccess: false, message: '編輯成功'})
+            state.notifications.push({isSuccess: true, message: '編輯成功'})
             return
           }
           state.editItemResultList = state.editItemResultList.map((editItemResult, idx, editItemResultList) => {

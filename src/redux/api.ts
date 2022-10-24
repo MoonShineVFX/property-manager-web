@@ -20,7 +20,7 @@ type ItemInfo = {[key: string]: string};
 
 type EditItemArgs = {
   sn: string,
-  oeid?: string,
+  oeid: string,
   note?: string
 }
 
@@ -73,7 +73,7 @@ export const api = createApi({
       query: (args) => ({
         url: 'item_edit',
         method: 'POST',
-        body: `action=save&sn=${args.sn}${args.oeid ? '&oeid=' + args.oeid : ''}${args.note ? '&note=' + args.note : ''}`,
+        body: `action=save&sn=${args.sn}&oeid=${args.oeid}${args.note ? '&note=' + args.note : ''}`,
         responseHandler: (response) => response.text(),
         validateStatus: (response, result) => result.includes('Successfully'),
       }),

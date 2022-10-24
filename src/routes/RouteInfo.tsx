@@ -9,14 +9,22 @@ import { LoadingIndicator } from '../icons'
 
 
 export default function RouteInfo(): JSX.Element {
-  const [isSlide, setIsSlide] = useState(false)
-  const {infoSn} = useAppSelector((state) => state.ui)
-  const {data, error, isFetching, isUninitialized} = useGetItemInfoQuery(infoSn ?? skipToken)
+  const [ isJustSwitchingRoute, setIsJustSwitchingRoute ] = useState(true)
+  const { infoSn } = useAppSelector((state) => state.ui)
+  const [ isInfoSnChanged, setIsInfoSnChanged ] = useState(false)
+  const { data, error, isFetching, isUninitialized } = useGetItemInfoQuery(infoSn ?? skipToken)
 
   useEffect(() => {
-    const timeout = setTimeout(() => setIsSlide(true), 500)
+    const timeout = setTimeout(() => setIsJustSwitchingRoute(false), 500)
     return () => clearTimeout(timeout)
   }, [])
+
+  useEffect(() => {
+    if (!isJustSwitchingRoute) {
+      setIsInfoSnChanged(false)
+      setIsInfoSnChanged(true)
+    }
+  }, [infoSn])
 
   return <div className="flex h-full justify-center items-center">
     <FetchStateSwitcher
@@ -24,11 +32,11 @@ export default function RouteInfo(): JSX.Element {
       errorMessage="查詢發生錯誤"
       isFirst={isUninitialized}
       error={error}
-      isFetching={isFetching}
+      isFetching={isFetching && isInfoSnChanged}
       resultElement={
         data && <div className='flex flex-col items-center h-full px-4 overflow-y-auto overflow-x-hidden
                          lg:scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent w-full'>
-          <ItemDetail itemInfo={data} isSlideActive={isSlide}/>
+          <ItemDetail key={infoSn} itemInfo={data} isSlideActive={isInfoSnChanged} onSlideFinished={() => setIsInfoSnChanged(false)}/>
         </div>
       }
     />
@@ -36,18 +44,25 @@ export default function RouteInfo(): JSX.Element {
 }
 
 
-function ItemDetail(props: {itemInfo: {[key: string]: string}, isSlideActive: boolean}): JSX.Element {
-  const {itemInfo} = props
+function ItemDetail(props: {itemInfo: {[key: string]: string}, isSlideActive: boolean, onSlideFinished?: () => void}): JSX.Element {
+  const { itemInfo } = props
   const [isSlide, setIsSlide] = useState(false)
   const animeStyle = isSlide ? 'animate-slide-in-up' : ''
 
   // Disable slide animation when switching route
   useEffect(() => {
-    if (!props.isSlideActive) return
-    setIsSlide(true)
-    const timeout = setTimeout(() => setIsSlide(false), 1000)
+    if (!props.isSlideActive) {
+      setIsSlide(false);
+      return;
+    }
+
+    setIsSlide(true);
+    const timeout = setTimeout(() => {
+      setIsSlide(false);
+      if (props.onSlideFinished) props.onSlideFinished();
+    }, 1000)
     return () => clearTimeout(timeout)
-  }, [itemInfo])
+  }, [props.isSlideActive])
 
   return <div
     className={`${animeStyle} w-full drop-shadow-eli max-w-md grow my-12
@@ -61,7 +76,7 @@ function ItemDetail(props: {itemInfo: {[key: string]: string}, isSlideActive: bo
           </div>
           <div className="grow text-right text-gray-500 text-xl font-bold">
             {key === 'note' ?
-              <NoteEditor sn={itemInfo.sn} content={itemInfo[key as keyof typeof itemInfo]}/> :
+              <NoteEditor sn={itemInfo.sn} oeid={itemInfo.oeid} content={itemInfo[key as keyof typeof itemInfo]}/> :
               itemInfo[key as keyof typeof itemInfo]}
           </div>
         </div>
@@ -70,7 +85,7 @@ function ItemDetail(props: {itemInfo: {[key: string]: string}, isSlideActive: bo
 }
 
 
-function NoteEditor(props: {sn: string, content: string}): JSX.Element {
+function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Element {
   const [isEditMode, setIsEditMode] = useState(false)
   const [content, setContent] = useState('')
   const [_, startTransition] = useTransition()
@@ -104,7 +119,7 @@ function NoteEditor(props: {sn: string, content: string}): JSX.Element {
 
   const handleNoteSubmit = (event: FormEvent) => {
     const note = textAreaRef.current?.value
-    editItem({sn: props.sn, note: note})
+    editItem({sn: props.sn, note: note, oeid: props.oeid})
     event.preventDefault()
   }
 
