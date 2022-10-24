@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useTransition, useRef, FormEvent } from 'react'
 import { skipToken } from "@reduxjs/toolkit/query"
 
-import { useEditItemInfoMutation, useGetItemInfoQuery } from '../redux/api'
+import { useEditItemInfoMutation, useGetItemInfoQuery, api } from '../redux/api'
 import { useAppSelector } from '../redux/store'
 import { FetchStateSwitcher } from '../components/FetchStateSwitcher'
 import Icon from '../icons'
@@ -91,6 +91,8 @@ function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Ele
   const [_, startTransition] = useTransition()
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   let [editItem, {isError, isSuccess, isLoading}] = useEditItemInfoMutation()
+  const { isFetching } = api.endpoints.getItemInfo.useQueryState(props.sn)
+  const isLoadingOrFetching = isLoading || isFetching;
 
   useEffect(() => {
     setContent(props.content)
@@ -107,8 +109,8 @@ function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Ele
     }
   }, [isEditMode])
   useEffect(() => {
-    if (isSuccess && isEditMode) setIsEditMode(false)
-  }, [isSuccess])
+    if (isSuccess && !isFetching && isEditMode) setIsEditMode(false)
+  }, [isSuccess, isFetching])
 
   const resizeTextArea = () => {
     startTransition(() => {
@@ -139,7 +141,7 @@ function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Ele
 
   return <form className="flex flex-col items-end" onSubmit={handleNoteSubmit}>
     <div className="relative">
-      {isLoading &&
+      {isLoadingOrFetching &&
         <div className="absolute w-full h-full grid place-content-center z-10">
           <LoadingIndicator className="w-24 h-24 text-teal-600/50 fill-teal-600"/>
         </div>
@@ -148,7 +150,7 @@ function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Ele
                 className={`text-left overflow-hidden rounded-md bg-gray-100 p-3 max-w-[16ch] sm:max-w-full
                             disabled:opacity-50 ${isError ? 'focus:outline-none ring-2 ring-red-400' : 'focus:outline-teal-600'}`}
                 onChange={resizeTextArea}
-                disabled={isLoading}
+                disabled={isLoadingOrFetching}
                 spellCheck={false}
                 autoCorrect="off"
                 autoComplete="off"
@@ -156,10 +158,10 @@ function NoteEditor(props: {sn: string, oeid: string, content: string}): JSX.Ele
                 defaultValue={content}/>
       <div className="text-base mt-2">
         <button className="bg-gray-400 hover:bg-gray-400/50 py-2 px-3 mr-4 rounded-md disabled:opacity-50"
-                disabled={isLoading} type="button" onClick={() => setIsEditMode(false)}>Cancel
+                disabled={isLoadingOrFetching} type="button" onClick={() => setIsEditMode(false)}>Cancel
         </button>
         <button className="bg-teal-600 hover:bg-teal-500 py-2 px-3 text-gray-200 rounded-md disabled:opacity-50"
-                disabled={isLoading} type="submit">Apply
+                disabled={isLoadingOrFetching} type="submit">Apply
         </button>
       </div>
     </div>
